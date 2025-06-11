@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }],
             };
 
-            const geminiApiKey = ""; // API key is handled by the environment
+            const geminiApiKey = "AIzaSyBtpnpIOqPZTyJgWB6RrNYVL1bJKsWQN9Y"; // API key is handled by the environment
             const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
 
             const geminiResponse = await fetch(geminiApiUrl, {
