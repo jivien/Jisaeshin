@@ -1,149 +1,80 @@
-// Wait for the DOM to be fully loaded before running the script
-document.addEventListener('DOMContentLoaded', () => {
+// Memilih elemen-elemen DOM yang akan digunakan
+const generateBtn = document.getElementById('generate-btn');
+const promptInput = document.getElementById('prompt-input');
+const imageContainer = document.getElementById('image-container');
+const placeholder = document.getElementById('placeholder');
+const loader = document.getElementById('loader');
+const resultImage = document.getElementById('result-image');
+const errorMessage = document.getElementById('error-message');
 
-    // DOM element references
-    const imageUpload = document.getElementById('image-upload');
-    const imagePreviewContainer = document.getElementById('image-preview-container');
-    const imagePreview = document.getElementById('image-preview');
-    const promptInput = document.getElementById('prompt-input');
-    const generateBtn = document.getElementById('generate-btn');
-    const resultContainer = document.getElementById('result-container');
-    const placeholder = document.getElementById('placeholder');
-    const loader = document.getElementById('loader');
-    const resultImage = document.getElementById('result-image');
-    const messageBox = document.getElementById('message-box');
+// Menambahkan event listener ke tombol generate
+generateBtn.addEventListener('click', async () => {
+    const prompt = promptInput.value;
 
-    let uploadedImageBase64 = null;
-
-    // Event listener for file upload
-    imageUpload.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const imageUrl = event.target.result;
-                imagePreview.src = imageUrl;
-                imagePreviewContainer.classList.remove('hidden');
-                // Store the base64 string without the data URL prefix
-                uploadedImageBase64 = imageUrl.split(',')[1];
-                generateBtn.disabled = false;
-                messageBox.textContent = '';
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // Event listener for generate button click
-    generateBtn.addEventListener('click', async () => {
-        if (!uploadedImageBase64) {
-            showMessage("Silakan unggah gambar terlebih dahulu.");
-            return;
-        }
-
-        // --- Start loading state ---
-        setLoadingState(true);
-        let finalPrompt = "";
-
-        try {
-            // --- Step 1: Analyze the image with Gemini to get a description ---
-            showMessage("Menganalisis gambar...");
-            const geminiPrompt = "Describe this image for a text-to-image AI. Be descriptive and focus on the main subject, setting, and style.";
-            
-            const geminiPayload = {
-                contents: [{
-                    role: "user",
-                    parts: [
-                        { text: geminiPrompt },
-                        { inlineData: { mimeType: "image/png", data: uploadedImageBase64 } }
-                    ]
-                }],
-            };
-
-            const geminiApiKey = "AIzaSyBtpnpIOqPZTyJgWB6RrNYVL1bJKsWQN9Y"; // API key is handled by the environment
-            const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-
-            const geminiResponse = await fetch(geminiApiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(geminiPayload)
-            });
-
-            if (!geminiResponse.ok) {
-                throw new Error(`Gemini API error! Status: ${geminiResponse.status}`);
-            }
-
-            const geminiResult = await geminiResponse.json();
-            
-            let imageDescription = "A detailed image"; // Fallback description
-            if (geminiResult.candidates && geminiResult.candidates[0]?.content?.parts[0]?.text) {
-                imageDescription = geminiResult.candidates[0].content.parts[0].text;
-            } else {
-                 console.warn("Could not get a detailed description from Gemini, using fallback.");
-            }
-
-            // --- Step 2: Combine description with user prompt ---
-            const userPrompt = promptInput.value.trim();
-            finalPrompt = userPrompt ? `${imageDescription}, ${userPrompt}` : imageDescription;
-            showMessage("Membuat gambar AI baru...");
-            console.log("Final prompt for Imagen:", finalPrompt);
-
-
-            // --- Step 3: Generate the new image with Imagen ---
-            const imagenPayload = {
-                instances: [{ prompt: finalPrompt }],
-                parameters: { "sampleCount": 1 }
-            };
-            const imagenApiKey = "AIzaSyBtpnpIOqPZTyJgWB6RrNYVL1bJKsWQN9Y"; // API key is handled by the environment
-            const imagenApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}}`;
-
-            const imagenResponse = await fetch(imagenApiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(imagenPayload)
-            });
-            
-            if (!imagenResponse.ok) {
-                throw new Error(`Imagen API error! Status: ${imagenResponse.status}`);
-            }
-
-            const imagenResult = await imagenResponse.json();
-            if (imagenResult.predictions && imagenResult.predictions[0]?.bytesBase64Encoded) {
-                const newImageData = imagenResult.predictions[0].bytesBase64Encoded;
-                resultImage.src = `data:image/png;base64,${newImageData}`;
-                resultImage.classList.remove('hidden');
-                resultImage.classList.add('fade-in');
-            } else {
-                throw new Error("Gagal membuat gambar. Respon API tidak valid.");
-            }
-
-        } catch (error) {
-            console.error("Error:", error);
-            showMessage(`Terjadi kesalahan: ${error.message}`);
-            resultImage.classList.add('hidden'); // Hide potentially broken image link
-        } finally {
-            // --- End loading state ---
-            setLoadingState(false);
-        }
-    });
-
-    // Helper function to manage UI loading state
-    function setLoadingState(isLoading) {
-        if (isLoading) {
-            generateBtn.disabled = true;
-            placeholder.classList.add('hidden');
-            resultImage.classList.add('hidden');
-            loader.classList.remove('hidden');
-        } else {
-            generateBtn.disabled = false;
-            loader.classList.add('hidden');
-            if (!resultImage.src || resultImage.src === window.location.href + '#') {
-                 placeholder.classList.remove('hidden');
-            }
-        }
+    // Validasi input
+    if (!prompt) {
+        errorMessage.textContent = 'Harap masukkan deskripsi sebelum menghasilkan gambar.';
+        return;
     }
-    
-    // Helper function to display messages to the user
-    function showMessage(msg) {
-        messageBox.textContent = msg;
+
+    // Menyiapkan UI untuk proses generasi
+    errorMessage.textContent = '';
+    generateBtn.disabled = true;
+    generateBtn.querySelector('span').textContent = 'Menghasilkan...';
+    placeholder.classList.add('hidden');
+    resultImage.classList.add('hidden');
+    loader.classList.remove('hidden');
+
+    try {
+        // Menyiapkan payload untuk API.
+        // Kita menambahkan detail ke prompt untuk mendapatkan hasil berkualitas sinematik.
+        const payload = {
+            instances: [{
+                prompt: `A cinematic, ultra-realistic 8k video still of: ${prompt}. Photorealistic, sharp focus, epic composition, high detail.`
+            }],
+            parameters: {
+                "sampleCount": 1
+            }
+        };
+
+        // API Key akan ditangani oleh lingkungan Canvas secara otomatis
+        const apiKey = ""; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+
+        // Melakukan panggilan fetch ke API
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Terjadi kesalahan jaringan: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        // Memeriksa dan menampilkan gambar
+        if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+            const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+            resultImage.src = imageUrl;
+            resultImage.classList.remove('hidden');
+        } else {
+            // Menampilkan pesan jika tidak ada gambar yang dikembalikan
+            throw new Error('Gagal menghasilkan gambar. Coba prompt yang berbeda atau coba lagi nanti.');
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        errorMessage.textContent = error.message;
+        // Jika terjadi kesalahan, tampilkan kembali placeholder
+        placeholder.classList.remove('hidden');
+    } finally {
+        // Mengembalikan UI ke keadaan normal setelah proses selesai
+        loader.classList.add('hidden');
+        generateBtn.disabled = false;
+        generateBtn.querySelector('span').textContent = 'Hasilkan Gambar';
     }
 });
