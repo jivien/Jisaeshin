@@ -38,7 +38,7 @@ generateBtn.addEventListener('click', async () => {
         };
 
         // API Key akan ditangani oleh lingkungan Canvas secara otomatis
-        const apiKey = ""; 
+        const apiKey = "AIzaSyBtpnpIOqPZTyJgWB6RrNYVL1bJKsWQN9Y"; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
 
         // Melakukan panggilan fetch ke API
