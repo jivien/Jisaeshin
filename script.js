@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 parameters: { "sampleCount": 1 }
             };
             const imagenApiKey = "AIzaSyBtpnpIOqPZTyJgWB6RrNYVL1bJKsWQN9Y"; // API key is handled by the environment
-            const imagenApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${imagenApiKey}`;
+            const imagenApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}}`;
 
             const imagenResponse = await fetch(imagenApiUrl, {
                 method: 'POST',
