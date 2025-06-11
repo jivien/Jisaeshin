@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 instances: [{ prompt: finalPrompt }],
                 parameters: { "sampleCount": 1 }
             };
-            const imagenApiKey = ""; // API key is handled by the environment
+            const imagenApiKey = "AIzaSyBtpnpIOqPZTyJgWB6RrNYVL1bJKsWQN9Y"; // API key is handled by the environment
             const imagenApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${imagenApiKey}`;
 
             const imagenResponse = await fetch(imagenApiUrl, {
