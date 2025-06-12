@@ -1,400 +1,1024 @@
 <!DOCTYPE html>
 <html lang="id">
-  </head>import React, { useState, useMemo } from 'react';
-import { Search, ShoppingCart, ArrowLeft, X, ChevronLeft, ChevronRight, Video, MessageCircle, User, MapPin, Phone, CreditCard, Banknote, Wallet, Package } from 'lucide-react';
-
-// --- DATA PRODUK (LEBIH LENGKAP) ---
-// Data sekarang mencakup beberapa gambar dan ID video YouTube
-const initialProducts = [
-  {
-    id: 1,
-    name: 'Kamera Mirrorless ProX',
-    description: 'Kamera mirrorless profesional dengan sensor full-frame 45MP. Mampu merekam video 8K. Cocok untuk fotografer dan videografer profesional yang menuntut kualitas tertinggi.',
-    price: 32500000,
-    images: [
-      'https://placehold.co/600x600/1a1a1a/ffffff?text=Kamera+Depan',
-      'https://placehold.co/600x600/1a1a1a/ffffff?text=Kamera+Samping',
-      'https://placehold.co/600x600/1a1a1a/ffffff?text=Kamera+Belakang',
-      'https://placehold.co/600x600/1a1a1a/ffffff?text=Lensa+Kit'
-    ],
-    videoYoutubeId: 'l_a59h8a-0k' // Contoh ID video YouTube
-  },
-  {
-    id: 2,
-    name: 'Drone DJI Air 3',
-    description: 'Drone lipat dengan kamera ganda, sensor 1/1.3-inch CMOS, dan kemampuan merekam video 4K/100fps. Waktu terbang maksimal 46 menit.',
-    price: 17800000,
-    images: [
-      'https://placehold.co/600x600/2a2a2a/ffffff?text=Drone+Terbang',
-      'https://placehold.co/600x600/2a2a2a/ffffff?text=Drone+Terlipat',
-      'https://placehold.co/600x600/2a2a2a/ffffff?text=Remote+Control'
-    ],
-    videoYoutubeId: 'r_T-nC2wR9c'
-  },
-  {
-    id: 3,
-    name: 'Laptop Gaming ROG Strix',
-    description: 'Ditenagai oleh prosesor Intel Core i9 Generasi ke-13 dan GPU NVIDIA GeForce RTX 4080. Layar QHD 240Hz untuk pengalaman gaming yang imersif.',
-    price: 45999000,
-    images: [
-      'https://placehold.co/600x600/1c1c1c/ffffff?text=Laptop+Depan',
-      'https://placehold.co/600x600/1c1c1c/ffffff?text=Keyboard+RGB',
-      'https://placehold.co/600x600/1c1c1c/ffffff?text=Port+Samping'
-    ],
-    videoYoutubeId: 'AbkUda2m6_0'
-  },
-  {
-    id: 4,
-    name: 'Sepatu Lari Ultraboost',
-    description: 'Sepatu lari dengan teknologi bantalan Boost yang responsif, memberikan kenyamanan maksimal untuk lari jarak jauh maupun penggunaan sehari-hari.',
-    price: 2800000,
-    images: [
-      'https://placehold.co/600x600/2b2b2b/ffffff?text=Sepatu+Samping',
-      'https://placehold.co/600x600/2b2b2b/ffffff?text=Sepatu+Atas',
-      'https://placehold.co/600x600/2b2b2b/ffffff?text=Sol+Sepatu'
-    ],
-    videoYoutubeId: null
-  },
-    {
-    id: 5,
-    name: 'Smartwatch Titan Pro',
-    description: 'Smartwatch tangguh dengan GPS, monitor detak jantung, SpO2, dan lebih dari 100 mode olahraga. Baterai tahan hingga 14 hari.',
-    price: 3500000,
-    images: [
-      'https://placehold.co/600x600/3a3a3a/ffffff?text=Watch+Face',
-      'https://placehold.co/600x600/3a3a3a/ffffff?text=Watch+Samping'
-    ],
-    videoYoutubeId: null
-  },
-  {
-    id: 6,
-    name: 'Mechanical Keyboard K8 Pro',
-    description: 'Keyboard mekanikal nirkabel dengan layout TKL. Switch Gateron Pro yang sudah di-lubed, PBT keycaps, dan hot-swappable.',
-    price: 1650000,
-    images: [
-      'https://placehold.co/600x600/1e1e1e/ffffff?text=Keyboard+Atas',
-      'https://placehold.co/600x600/1e1e1e/ffffff?text=Detail+Switch',
-      'https://placehold.co/600x600/1e1e1e/ffffff?text=Lampu+RGB'
-    ],
-    videoYoutubeId: 'kUy31G36d24'
-  },
-];
-
-// --- Helper Functions & Components ---
-const formatCurrency = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
-
-const ProductCard = ({ product, onProductSelect }) => (
-  <div onClick={() => onProductSelect(product)} className="bg-slate-800 rounded-lg shadow-lg overflow-hidden transition-transform transform hover:scale-105 cursor-pointer flex flex-col group">
-    <img src={product.images[0]} alt={product.name} className="w-full h-48 object-cover" />
-    <div className="p-4 flex flex-col flex-grow">
-      <h3 className="text-md font-bold text-white mb-2 truncate group-hover:whitespace-normal">{product.name}</h3>
-      <div className="mt-auto">
-         <p className="text-lg font-semibold text-cyan-400">{formatCurrency(product.price)}</p>
-      </div>
-    </div>
-  </div>
-);
-
-// --- MAIN APPLICATION COMPONENT ---
-export default function App() {
-  const [products] = useState(initialProducts);
-  const [cart, setCart] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentView, setCurrentView] = useState('catalog'); // catalog, productDetail, cart, checkout
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [address, setAddress] = useState({ name: '', street: '', phone: '' });
-  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
-
-  const handleProductSelect = (product) => {
-    setSelectedProduct(product);
-    setCurrentView('productDetail');
-  };
-
-  const handleAddToCart = (product, quantity = 1) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find(item => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
-      }
-      return [...prevCart, { ...product, quantity }];
-    });
-    alert(${product.name} telah ditambahkan ke keranjang!);
-  };
-
-  const handleUpdateCartQuantity = (productId, amount) => {
-    setCart(prevCart => prevCart.map(item => {
-        if (item.id === productId) {
-          const newQuantity = item.quantity + amount;
-          return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog Produk Monggo</title>
+    
+    <!-- Impor Font dari Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Impor Ikon Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Semua gaya CSS disematkan di sini -->
+    <style>
+        /* --- Variabel Global dan Gaya Dasar --- */
+        :root {
+            --bg-dark: #0f172a;      /* Warna dasar latar belakang */
+            --bg-medium: #1e293b;   /* Warna untuk kartu dan panel */
+            --bg-light: #334155;    /* Warna untuk input dan elemen sekunder */
+            --text-primary: #f8fafc; /* Warna teks utama */
+            --text-secondary: #94a3b8;/* Warna teks sekunder/abu-abu */
+            --accent: #22d3ee;      /* Warna aksen (sian) */
+            --accent-dark: #0891b2; /* Warna aksen untuk tombol */
+            --danger: #ef4444;      /* Warna untuk notifikasi/hapus */
+            --success: #22c55e;     /* Warna untuk tombol "Hubungi Admin" */
+            --container-width: 1280px;
+            --border-color: #475569;
+            --border-radius: 0.5rem; /* Sudut melengkung untuk semua elemen */
         }
-        return item;
-      }).filter(Boolean)
-    );
-  };
-    
-  const handleRemoveFromCart = (productId) => {
-    setCart(cart => cart.filter(item => item.id !== productId));
-  };
 
-  const handlePlaceOrder = (e) => {
-    e.preventDefault();
-    if(cart.length === 0) {
-        alert("Keranjang Anda kosong!");
-        return;
-    }
-    if (!address.name || !address.street || !address.phone) {
-        alert("Harap isi semua detail alamat pengiriman.");
-        return;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    console.log("Order Placed:", {
-        address,
-        paymentMethod,
-        items: cart,
-        total: totalCost
-    });
-    
-    alert(Pesanan berhasil dibuat! \nTotal: ${formatCurrency(totalCost)} \nMetode Pembayaran: ${paymentMethod.replace('_', ' ').toUpperCase()});
-    
-    setCart([]);
-    setCurrentView('catalog');
-  };
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-  const filteredProducts = useMemo(() => 
-    products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())),
-    [products, searchQuery]
-  );
-  
-  const totalCost = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart]);
-  const totalItemsInCart = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
+        .container {
+            max-width: var(--container-width);
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
 
-  // --- Render Logic ---
-  const renderHeader = () => (
-    <header className="bg-slate-800/70 backdrop-blur-sm sticky top-0 z-20 border-b border-slate-700">
-      <div className="container mx-auto px-4 py-3 flex items-center gap-4">
-        {currentView !== 'catalog' && (
-          <button onClick={() => setCurrentView(currentView === 'productDetail' ? 'catalog' : 'cart')} className="text-white p-2 rounded-full hover:bg-slate-700">
-            <ArrowLeft size={24} />
-          </button>
-        )}
-        <div className="flex-grow relative">
-          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Cari produk..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setCurrentView('catalog')}
-            className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-          />
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--accent-dark);
+            color: var(--text-primary);
+        }
+        .btn-primary:hover {
+            background-color: #06b6d4; /* cyan-500 */
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.2s;
+        }
+        .icon-button:hover {
+            background-color: var(--bg-light);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+            background-color: var(--bg-medium);
+            border-radius: var(--border-radius);
+        }
+        .empty-state button {
+            margin-top: 1rem;
+        }
+
+        .view-title {
+            font-size: 1.75rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+        }
+
+        /* --- Header & Logo--- */
+        #app-header {
+            background-color: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        #app-header .container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            height: 64px;
+        }
+        #brand-logo {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.75rem;
+            cursor: pointer;
+            /* Efek teks gradien untuk warna yang stylish */
+            background: linear-gradient(45deg, var(--accent), #f97316, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            margin-right: 1.5rem; /* Spasi antara logo dan bar pencarian */
+        }
+
+        .search-container {
+            flex-grow: 1;
+            position: relative;
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+        #search-input {
+            width: 100%;
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 0.6rem 0.75rem 0.6rem 2.5rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        #search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .cart-badge {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            background-color: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- Main Content --- */
+        #app-main {
+            padding-top: 1.5rem;
+            padding-bottom: 5rem; /* Extra space for FAB */
+        }
+
+        /* --- Tampilan Katalog --- */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1.25rem;
+        }
+        .product-card {
+            background-color: var(--bg-medium);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease-out, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+        }
+        .product-card img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+        }
+        .product-card-info {
+            padding: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-card-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            flex-grow: 1;
+            line-height: 1.4;
+        }
+        .product-card-info p {
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        /* --- Tampilan Detail Produk --- */
+        .detail-container {
+            max-width: 1000px;
+            margin: auto;
+            background-color: var(--bg-medium);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        @media (min-width: 768px) {
+            .detail-container {
+                flex-direction: row;
+            }
+        }
+        .detail-gallery {
+            flex-basis: 50%;
+            min-width: 50%;
+        }
+        .detail-main-media {
+            aspect-ratio: 1 / 1;
+            background-color: black;
+            position: relative;
+        }
+        .detail-main-media img, .detail-main-media iframe {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border: none;
+        }
+        .gallery-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.4);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .gallery-nav:hover {
+            background-color: rgba(0,0,0,0.7);
+        }
+        .gallery-nav.prev { left: 0.75rem; }
+        .gallery-nav.next { right: 0.75rem; }
+        .detail-thumbnails {
+            display: flex;
+            padding: 0.5rem;
+            background-color: var(--bg-dark);
+            overflow-x: auto;
+        }
+        .thumbnail, .video-thumbnail {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 0.375rem;
+            margin-right: 0.5rem;
+            cursor: pointer;
+            border: 3px solid transparent;
+            flex-shrink: 0;
+            transition: border-color 0.2s;
+        }
+        .thumbnail.active, .video-thumbnail.active {
+            border-color: var(--accent);
+        }
+        .video-thumbnail {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-light);
+        }
+        .detail-info {
+            flex-basis: 50%;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .detail-info h2 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 0.75rem;
+        }
+        .detail-info .price {
+            font-size: 2.25rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+        }
+        .detail-info .description {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+            line-height: 1.6;
+        }
+
+        /* --- Tampilan Keranjang dan Checkout --- */
+        .cart-items-container-wrapper, .checkout-form {
+             max-width: 768px;
+             margin: auto;
+        }
+        .cart-items-container {
+            background-color: var(--bg-medium);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        .cart-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .cart-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+        }
+        .cart-item-info {
+            flex-grow: 1;
+        }
+        .cart-item-info p {
+            font-weight: 600;
+        }
+        .cart-item-info span {
+            font-size: 0.875rem;
+            color: var(--accent);
+        }
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .quantity-control button {
+            background-color: var(--bg-light);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .quantity-control button:hover {
+            background-color: #475569;
+        }
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* --- Formulir Checkout --- */
+        .checkout-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        @media (min-width: 768px) {
+            .checkout-grid {
+                grid-template-columns: 1fr 0.8fr;
+            }
+        }
+        .form-section {
+            background-color: var(--bg-medium);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+        }
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 1.25rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .section-title i {
+            color: var(--accent);
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+        .input-group i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        .input-group input {
+            width: 100%;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 0.8rem 1rem 0.8rem 3rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .payment-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--bg-dark);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .payment-option:has(input:checked) {
+            border-color: var(--accent);
+        }
+        .payment-option span {
+            flex-grow: 1;
+            font-weight: 500;
+        }
+        .summary-items-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding-right: 0.5rem;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+        .summary-item .name { color: var(--text-secondary); }
+        .summary-item .price { font-weight: 500; }
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        /* --- Tombol Hubungi Admin (Floating Action Button) --- */
+        .fab {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 60px;
+            height: 60px;
+            background-color: var(--success);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            z-index: 40;
+        }
+        .fab:hover {
+            background-color: #16a34a;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Aplikasi -->
+    <header id="app-header">
+        <div class="container">
+            <button id="back-button" class="icon-button" style="display: none;">
+                <i data-lucide="arrow-left"></i>
+            </button>
+            <h1 id="brand-logo">Monggo</h1>
+            <div class="search-container">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" id="search-input" placeholder="Cari di Katalog Monggo...">
+            </div>
+            <button id="cart-button" class="icon-button">
+                <i data-lucide="shopping-cart"></i>
+                <span id="cart-item-count" class="cart-badge" style="display: none;">0</span>
+            </button>
         </div>
-        <button onClick={() => setCurrentView('cart')} className="relative text-white p-2 rounded-full hover:bg-slate-700">
-          <ShoppingCart size={24} />
-          {totalItemsInCart > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{totalItemsInCart}</span>
-          )}
-        </button>
-      </div>
     </header>
-  );
 
-  const renderCatalog = () => (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-6 text-white">Jelajahi Produk Kami</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {filteredProducts.map(p => <ProductCard key={p.id} product={p} onProductSelect={handleProductSelect} />)}
-      </div>
-       {filteredProducts.length === 0 && <p className="text-slate-400 text-center py-10">Produk tidak ditemukan.</p>}
-    </div>
-  );
-
-  const ProductDetailView = () => {
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [showVideo, setShowVideo] = useState(false);
-
-    if (!selectedProduct) return null;
-
-    const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % selectedProduct.images.length);
-    const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + selectedProduct.images.length) % selectedProduct.images.length);
-
-    return (
-      <div className="p-4">
-        <div className="max-w-4xl mx-auto bg-slate-800 rounded-lg shadow-xl overflow-hidden">
-          <div className="md:flex">
-             {/* Image & Video Viewer */}
-            <div className="md:w-1/2">
-                <div className="relative aspect-square bg-black">
-                    {showVideo && selectedProduct.videoYoutubeId ? (
-                        <iframe
-                            className="w-full h-full"
-                            src={https://www.youtube.com/embed/${selectedProduct.videoYoutubeId}?autoplay=1&rel=0}
-                            title="YouTube video player"
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen>
-                        </iframe>
-                    ) : (
-                        <>
-                            <img src={selectedProduct.images[currentImageIndex]} alt="Product" className="w-full h-full object-cover"/>
-                            {selectedProduct.images.length > 1 &&
-                                <>
-                                <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/80"><ChevronLeft/></button>
-                                <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/80"><ChevronRight/></button>
-                                </>
-                            }
-                        </>
-                    )}
-                </div>
-                 <div className="flex p-2 bg-slate-900 overflow-x-auto">
-                    {selectedProduct.images.map((img, index) => (
-                        <img key={index} src={img} onClick={() => { setCurrentImageIndex(index); setShowVideo(false); }} className={w-16 h-16 object-cover rounded-md mr-2 cursor-pointer border-2 ${currentImageIndex === index && !showVideo ? 'border-cyan-500' : 'border-transparent'}}/>
-                    ))}
-                    {selectedProduct.videoYoutubeId && (
-                         <div onClick={() => setShowVideo(true)} className={w-16 h-16 rounded-md mr-2 cursor-pointer border-2 flex items-center justify-center bg-slate-700 ${showVideo ? 'border-cyan-500' : 'border-transparent'}}>
-                             <Video size={32} className="text-white"/>
-                         </div>
-                    )}
-                </div>
+    <!-- Konten Utama Aplikasi -->
+    <main id="app-main" class="container">
+        <!-- Tampilan Katalog -->
+        <div id="catalog-view">
+            <h2 class="view-title">Jelajahi Produk Kami</h2>
+            <div id="product-grid" class="product-grid">
+                <!-- Kartu produk akan dimasukkan di sini oleh JavaScript -->
             </div>
-            {/* Product Info */}
-            <div className="md:w-1/2 p-6 flex flex-col">
-              <h2 className="text-3xl font-bold text-white mb-2">{selectedProduct.name}</h2>
-              <p className="text-3xl font-bold text-cyan-400 mb-4">{formatCurrency(selectedProduct.price)}</p>
-              <p className="text-slate-300 mb-6 flex-grow">{selectedProduct.description}</p>
-              <button onClick={() => handleAddToCart(selectedProduct)} className="w-full bg-cyan-600 text-white font-bold py-3 rounded-lg hover:bg-cyan-700 transition-colors flex items-center justify-center gap-2">
-                <ShoppingCart size={20}/> Tambah ke Keranjang
-              </button>
-            </div>
-          </div>
+            <p id="no-products-message" class="empty-state" style="display: none;">Produk tidak ditemukan.</p>
         </div>
-      </div>
-    );
-  };
-    
-  const CartView = () => (
-    <div className="p-4 max-w-2xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-white">Keranjang Saya</h2>
-        {cart.length === 0 ? (
-            <div className="text-center py-12 bg-slate-800 rounded-lg">
-                <p className="text-slate-400">Keranjang Anda kosong.</p>
-                <button onClick={() => setCurrentView('catalog')} className="mt-4 bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-cyan-700">Mulai Belanja</button>
-            </div>
-        ) : (
-            <div className="bg-slate-800 rounded-lg shadow-lg p-6">
-                <div className="space-y-4">
-                    {cart.map(item => (
-                        <div key={item.id} className="flex items-center gap-4 border-b border-slate-700 pb-4">
-                            <img src={item.images[0]} alt={item.name} className="w-20 h-20 rounded-md object-cover"/>
-                            <div className="flex-grow">
-                                <p className="font-bold text-white">{item.name}</p>
-                                <p className="text-sm text-cyan-400">{formatCurrency(item.price)}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button onClick={() => handleUpdateCartQuantity(item.id, -1)} className="p-1.5 rounded-full bg-slate-700 hover:bg-slate-600">-</button>
-                                <span className="w-8 text-center font-bold">{item.quantity}</span>
-                                <button onClick={() => handleUpdateCartQuantity(item.id, 1)} className="p-1.5 rounded-full bg-slate-700 hover:bg-slate-600">+</button>
-                            </div>
-                            <button onClick={() => handleRemoveFromCart(item.id)} className="text-red-500 hover:text-red-400"><X size={20}/></button>
-                        </div>
-                    ))}
-                </div>
-                <div className="mt-6">
-                    <div className="flex justify-between text-xl font-bold">
-                        <span>Total:</span>
-                        <span>{formatCurrency(totalCost)}</span>
-                    </div>
-                    <button onClick={() => setCurrentView('checkout')} className="w-full mt-4 bg-cyan-600 text-white font-bold py-3 rounded-lg hover:bg-cyan-700">
-                        Checkout
-                    </button>
-                </div>
-            </div>
-        )}
-    </div>
-  );
-    
-  const CheckoutView = () => (
-    <form onSubmit={handlePlaceOrder} className="p-4 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-white">Checkout</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Address & Payment */}
-            <div>
-                {/* Alamat Pengiriman */}
-                <div className="bg-slate-800 p-6 rounded-lg mb-6">
-                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><MapPin size={20} className="text-cyan-400"/> Alamat Pengiriman</h3>
-                    <div className="space-y-4">
-                        <div className="relative">
-                           <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18}/>
-                           <input type="text" placeholder="Nama Penerima" value={address.name} onChange={e => setAddress({...address, name: e.target.value})} className="w-full bg-slate-700 rounded-md py-2 pl-10 pr-3" required />
-                        </div>
-                        <div className="relative">
-                           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18}/>
-                           <input type="text" placeholder="Alamat Lengkap" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} className="w-full bg-slate-700 rounded-md py-2 pl-10 pr-3" required />
-                        </div>
-                        <div className="relative">
-                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18}/>
-                           <input type="tel" placeholder="Nomor Telepon" value={address.phone} onChange={e => setAddress({...address, phone: e.target.value})} className="w-full bg-slate-700 rounded-md py-2 pl-10 pr-3" required />
-                        </div>
-                    </div>
-                </div>
 
-                {/* Metode Pembayaran */}
-                <div className="bg-slate-800 p-6 rounded-lg">
-                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><CreditCard size={20} className="text-cyan-400"/> Metode Pembayaran</h3>
-                    <div className="space-y-3">
-                        {['bank_transfer', 'credit_card', 'e_wallet'].map(method => (
-                             <label key={method} className="flex items-center gap-3 p-3 bg-slate-700 rounded-lg cursor-pointer has-[:checked]:bg-cyan-900/50 has-[:checked]:ring-2 has-[:checked]:ring-cyan-500">
-                                <input type="radio" name="payment" value={method} checked={paymentMethod === method} onChange={e => setPaymentMethod(e.target.value)} className="w-4 h-4 accent-cyan-500"/>
-                                <span className="capitalize font-semibold">{method.replace('_', ' ')}</span>
-                                {method === 'bank_transfer' && <Banknote className="ml-auto text-slate-400"/>}
-                                {method === 'credit_card' && <CreditCard className="ml-auto text-slate-400"/>}
-                                {method === 'e_wallet' && <Wallet className="ml-auto text-slate-400"/>}
-                             </label>
-                        ))}
-                    </div>
-                </div>
-            </div>
+        <!-- Tampilan Detail Produk -->
+        <div id="product-detail-view" style="display: none;">
+            <!-- Konten detail produk akan dimasukkan di sini oleh JavaScript -->
+        </div>
 
-            {/* Ringkasan Pesanan */}
-            <div className="bg-slate-800 p-6 rounded-lg h-fit">
-                <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Package size={20} className="text-cyan-400"/> Ringkasan Pesanan</h3>
-                 <div className="space-y-2 max-h-64 overflow-y-auto pr-2 mb-4">
-                    {cart.map(item => (
-                        <div key={item.id} className="flex justify-between items-start gap-2">
-                           <span className="text-slate-300">{item.name} <span className="text-xs">x{item.quantity}</span></span>
-                           <span className="font-semibold text-right whitespace-nowrap">{formatCurrency(item.price * item.quantity)}</span>
-                        </div>
-                    ))}
+        <!-- Tampilan Keranjang -->
+        <div id="cart-view" style="display: none;">
+            <h2 class="view-title">Keranjang Belanja</h2>
+            <div class="cart-items-container-wrapper">
+                <div id="cart-items-container">
+                    <!-- Item keranjang akan dimasukkan di sini oleh JavaScript -->
                 </div>
-                <div className="border-t border-slate-700 pt-4 mt-4 space-y-2">
-                    <div className="flex justify-between font-bold text-lg">
-                        <span>Total</span>
-                        <span>{formatCurrency(totalCost)}</span>
+                 <div id="cart-empty-message" class="empty-state" style="display: none;">
+                    <p>Keranjang Anda masih kosong.</p>
+                    <button id="start-shopping-button" class="btn btn-primary">Mulai Belanja</button>
+                </div>
+                <div id="cart-summary" style="display: none;">
+                    <div class="cart-total">
+                        <span>Total Belanja:</span>
+                        <span id="cart-total-price"></span>
                     </div>
+                    <button id="checkout-button" class="btn btn-primary btn-full">Lanjut ke Checkout</button>
                 </div>
-                <button type="submit" className="w-full mt-6 bg-cyan-600 text-white font-bold py-3 rounded-lg hover:bg-cyan-700">
-                    Buat Pesanan
-                </button>
             </div>
         </div>
-    </form>
-  );
 
-  return (
-    <div className="bg-slate-900 min-h-screen text-white font-sans">
-      {renderHeader()}
-      <main className="container mx-auto">
-        {currentView === 'catalog' && renderCatalog()}
-        {currentView === 'productDetail' && <ProductDetailView />}
-        {currentView === 'cart' && <CartView />}
-        {currentView === 'checkout' && <CheckoutView />}
-      </main>
-      {/* Tombol Hubungi Admin */}
-      <a href="mailto:admin@tokosaya.com" className="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-colors flex items-center gap-2">
-        <MessageCircle size={24}/>
-      </a>
-    </div>
-  );
-}
-  </script>>
+        <!-- Tampilan Checkout -->
+        <div id="checkout-view" style="display: none;">
+             <h2 class="view-title">Checkout Pesanan</h2>
+             <form id="checkout-form">
+                <div class="checkout-grid">
+                    <!-- Kolom Alamat dan Pembayaran -->
+                    <div class="form-column">
+                        <div class="form-section">
+                             <h3 class="section-title"><i data-lucide="map-pin"></i> Alamat Pengiriman</h3>
+                             <div class="input-group">
+                                 <i data-lucide="user"></i>
+                                 <input type="text" id="customer-name" placeholder="Nama Lengkap Penerima" required>
+                             </div>
+                             <div class="input-group">
+                                 <i data-lucide="home"></i>
+                                 <input type="text" id="customer-address" placeholder="Jalan, Nomor Rumah, Kota, Kode Pos" required>
+                             </div>
+                             <div class="input-group">
+                                 <i data-lucide="phone"></i>
+                                 <input type="tel" id="customer-phone" placeholder="Nomor Telepon Aktif" required>
+                             </div>
+                        </div>
+                         <div class="form-section">
+                             <h3 class="section-title"><i data-lucide="credit-card"></i> Metode Pembayaran</h3>
+                             <div class="payment-options">
+                                 <label class="payment-option">
+                                     <input type="radio" name="payment" value="bank_transfer" checked>
+                                     <span>Transfer Bank</span>
+                                     <i data-lucide="banknote"></i>
+                                 </label>
+                                  <label class="payment-option">
+                                     <input type="radio" name="payment" value="credit_card">
+                                     <span>Kartu Kredit</span>
+                                     <i data-lucide="credit-card"></i>
+                                 </label>
+                                  <label class="payment-option">
+                                     <input type="radio" name="payment" value="e_wallet">
+                                     <span>E-Wallet (GoPay, OVO, dll)</span>
+                                     <i data-lucide="wallet"></i>
+                                 </label>
+                             </div>
+                        </div>
+                    </div>
+                    <!-- Kolom Ringkasan Pesanan -->
+                    <div class="summary-column">
+                        <div class="form-section">
+                             <h3 class="section-title"><i data-lucide="package"></i> Ringkasan Pesanan</h3>
+                             <div id="summary-items-list" class="summary-items-list"></div>
+                             <div class="summary-total">
+                                 <span>Total Bayar</span>
+                                 <span id="summary-total-price"></span>
+                             </div>
+                             <button type="submit" class="btn btn-primary btn-full">Buat Pesanan Sekarang</button>
+                        </div>
+                    </div>
+                </div>
+             </form>
+        </div>
+    </main>
+    
+    <!-- Tombol Hubungi Admin -->
+    <a href="mailto:admin@monggo.com?subject=Bantuan Produk" class="fab" title="Hubungi Admin">
+        <i data-lucide="message-circle"></i>
+    </a>
+
+    <!-- Semua logika JavaScript disematkan di sini -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- DATABASE PRODUK (Bisa diganti dengan data Anda) ---
+            const products = [
+              {
+                id: 1,
+                name: 'Kamera Mirrorless ProX',
+                description: 'Kamera mirrorless profesional dengan sensor full-frame 45MP. Mampu merekam video 8K. Cocok untuk fotografer dan videografer profesional yang menuntut kualitas tertinggi.',
+                price: 32500000,
+                images: [
+                  'https://placehold.co/600x600/1a1a1a/ffffff?text=Kamera+Depan',
+                  'https://placehold.co/600x600/1a1a1a/ffffff?text=Kamera+Samping',
+                  'https://placehold.co/600x600/1a1a1a/ffffff?text=Kamera+Belakang',
+                  'https://placehold.co/600x600/1a1a1a/ffffff?text=Lensa+Kit'
+                ],
+                videoYoutubeId: 'l_a59h8a-0k'
+              },
+              {
+                id: 2,
+                name: 'Drone DJI Air 3',
+                description: 'Drone lipat dengan kamera ganda, sensor 1/1.3-inch CMOS, dan kemampuan merekam video 4K/100fps. Waktu terbang maksimal 46 menit.',
+                price: 17800000,
+                images: [
+                  'https://placehold.co/600x600/2a2a2a/ffffff?text=Drone+Terbang',
+                  'https://placehold.co/600x600/2a2a2a/ffffff?text=Drone+Terlipat',
+                  'https://placehold.co/600x600/2a2a2a/ffffff?text=Remote+Control'
+                ],
+                videoYoutubeId: 'r_T-nC2wR9c'
+              },
+              {
+                id: 3,
+                name: 'Laptop Gaming ROG Strix',
+                description: 'Ditenagai oleh prosesor Intel Core i9 Generasi ke-13 dan GPU NVIDIA GeForce RTX 4080. Layar QHD 240Hz untuk pengalaman gaming yang imersif.',
+                price: 45999000,
+                images: [
+                  'https://placehold.co/600x600/1c1c1c/ffffff?text=Laptop+Depan',
+                  'https://placehold.co/600x600/1c1c1c/ffffff?text=Keyboard+RGB',
+                  'https://placehold.co/600x600/1c1c1c/ffffff?text=Port+Samping'
+                ],
+                videoYoutubeId: 'AbkUda2m6_0'
+              },
+              {
+                id: 4,
+                name: 'Sepatu Lari Ultraboost',
+                description: 'Sepatu lari dengan teknologi bantalan Boost yang responsif, memberikan kenyamanan maksimal untuk lari jarak jauh maupun penggunaan sehari-hari.',
+                price: 2800000,
+                images: [
+                  'https://placehold.co/600x600/2b2b2b/ffffff?text=Sepatu+Samping',
+                  'https://placehold.co/600x600/2b2b2b/ffffff?text=Sepatu+Atas',
+                  'https://placehold.co/600x600/2b2b2b/ffffff?text=Sol+Sepatu'
+                ],
+                videoYoutubeId: null
+              },
+              {
+                id: 5,
+                name: 'Smartwatch Titan Pro',
+                description: 'Smartwatch tangguh dengan GPS, monitor detak jantung, SpO2, dan lebih dari 100 mode olahraga. Baterai tahan hingga 14 hari.',
+                price: 3500000,
+                images: [
+                  'https://placehold.co/600x600/3a3a3a/ffffff?text=Watch+Face',
+                  'https://placehold.co/600x600/3a3a3a/ffffff?text=Watch+Samping'
+                ],
+                videoYoutubeId: null
+              },
+              {
+                id: 6,
+                name: 'Mechanical Keyboard K8 Pro',
+                description: 'Keyboard mekanikal nirkabel dengan layout TKL. Switch Gateron Pro yang sudah di-lubed, PBT keycaps, dan hot-swappable.',
+                price: 1650000,
+                images: [
+                  'https://placehold.co/600x600/1e1e1e/ffffff?text=Keyboard+Atas',
+                  'https://placehold.co/600x600/1e1e1e/ffffff?text=Detail+Switch',
+                  'https://placehold.co/600x600/1e1e1e/ffffff?text=Lampu+RGB'
+                ],
+                videoYoutubeId: 'kUy31G36d24'
+              },
+            ];
+
+            // --- STATE MANAGEMENT (Status aplikasi saat ini) ---
+            let cart = [];
+            let currentView = 'catalog';
+            let historyStack = ['catalog'];
+
+            // --- Elemen DOM yang sering digunakan ---
+            const views = {
+                catalog: document.getElementById('catalog-view'),
+                productDetail: document.getElementById('product-detail-view'),
+                cart: document.getElementById('cart-view'),
+                checkout: document.getElementById('checkout-view'),
+            };
+            const productGrid = document.getElementById('product-grid');
+            const searchInput = document.getElementById('search-input');
+            const cartItemCount = document.getElementById('cart-item-count');
+            const backButton = document.getElementById('back-button');
+            const cartButton = document.getElementById('cart-button');
+            const brandLogo = document.getElementById('brand-logo');
+
+            // --- Fungsi Bantu ---
+            const formatCurrency = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+
+            // --- FUNGSI RENDER (Untuk menampilkan data ke HTML) ---
+
+            const renderCatalog = (productsToRender) => {
+                const productList = productsToRender || products;
+                productGrid.innerHTML = '';
+                document.getElementById('no-products-message').style.display = productList.length === 0 ? 'block' : 'none';
+
+                productList.forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.dataset.productId = product.id;
+                    card.innerHTML = `
+                        <img src="${product.images[0]}" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/300x300/1e293b/ffffff?text=Error';">
+                        <div class="product-card-info">
+                            <h3>${product.name}</h3>
+                            <p>${formatCurrency(product.price)}</p>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => {
+                        renderProductDetail(product.id);
+                        switchView('productDetail');
+                    });
+                    productGrid.appendChild(card);
+                });
+            };
+
+            const renderProductDetail = (productId) => {
+                const product = products.find(p => p.id === productId);
+                if (!product) return;
+
+                let thumbnailHTML = product.images.map((img, index) => 
+                    <img src="${img}" class="thumbnail ${index === 0 ? 'active' : ''}" data-index="${index}" alt="thumbnail ${index + 1}" onerror="this.onerror=null;this.style.display='none';">
+                ).join('');
+
+                if (product.videoYoutubeId) {
+                    thumbnailHTML += <div class="video-thumbnail" data-video-id="${product.videoYoutubeId}"><i data-lucide="video"></i></div>;
+                }
+                
+                views.productDetail.innerHTML = `
+                    <div class="detail-container">
+                        <div class="detail-gallery">
+                            <div class="detail-main-media"></div>
+                            <div class="detail-thumbnails">${thumbnailHTML}</div>
+                        </div>
+                        <div class="detail-info">
+                            <h2>${product.name}</h2>
+                            <p class="price">${formatCurrency(product.price)}</p>
+                            <p class="description">${product.description}</p>
+                            <button class="btn btn-primary btn-full add-to-cart-detail"><i data-lucide="shopping-cart"></i> Tambah ke Keranjang</button>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons(); // Perbarui ikon setelah render
+
+                let currentImageIndex = 0;
+                const mainMediaContainer = views.productDetail.querySelector('.detail-main-media');
+
+                const updateMedia = (index, isVideo = false) => {
+                    mainMediaContainer.innerHTML = '';
+                    views.productDetail.querySelectorAll('.thumbnail, .video-thumbnail').forEach(t => t.classList.remove('active'));
+
+                    if (isVideo) {
+                        mainMediaContainer.innerHTML = <iframe src="https://www.youtube.com/embed/${product.videoYoutubeId}?autoplay=1&rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe>;
+                        views.productDetail.querySelector('.video-thumbnail').classList.add('active');
+                    } else {
+                        currentImageIndex = index;
+                        mainMediaContainer.innerHTML = `
+                            <img src="${product.images[index]}" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/600x600/1e293b/ffffff?text=Image+Error';">
+                            <button class="gallery-nav prev"><i data-lucide="chevron-left"></i></button>
+                            <button class="gallery-nav next"><i data-lucide="chevron-right"></i></button>
+                        `;
+                        views.productDetail.querySelector(.thumbnail[data-index="${index}"]).classList.add('active');
+                        lucide.createIcons();
+                        // Tambahkan event listener untuk tombol navigasi galeri
+                        mainMediaContainer.querySelector('.prev').addEventListener('click', () => navigateGallery(-1));
+                        mainMediaContainer.querySelector('.next').addEventListener('click', () => navigateGallery(1));
+                    }
+                };
+                
+                const navigateGallery = (direction) => {
+                    let newIndex = (currentImageIndex + direction + product.images.length) % product.images.length;
+                    updateMedia(newIndex);
+                };
+
+                updateMedia(0); // Tampilkan gambar pertama saat halaman dimuat
+
+                views.productDetail.querySelectorAll('.thumbnail, .video-thumbnail').forEach(thumb => {
+                    thumb.addEventListener('click', () => {
+                        if (thumb.dataset.videoId) {
+                            updateMedia(null, true);
+                        } else {
+                            updateMedia(parseInt(thumb.dataset.index));
+                        }
+                    });
+                });
+                
+                views.productDetail.querySelector('.add-to-cart-detail').addEventListener('click', () => addToCart(product.id));
+            };
+
+            const renderCart = () => {
+                const wrapper = document.querySelector('#cart-view .cart-items-container-wrapper');
+                const container = document.getElementById('cart-items-container');
+                const emptyMessage = document.getElementById('cart-empty-message');
+                const summary = document.getElementById('cart-summary');
+                const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+
+                if (cart.length === 0) {
+                    wrapper.style.display = "block"; // Keep wrapper visible for empty state
+                    container.innerHTML = '';
+                    emptyMessage.style.display = 'block';
+                    summary.style.display = 'none';
+                } else {
+                    wrapper.style.display = "block";
+                    emptyMessage.style.display = 'none';
+                    summary.style.display = 'block';
+                    container.innerHTML = cart.map(item => `
+                        <div class="cart-item" data-product-id="${item.id}">
+                            <img src="${item.images[0]}" alt="${item.name}" onerror="this.onerror=null;this.src='https://placehold.co/80x80/1e293b/ffffff?text=X';">
+                            <div class="cart-item-info">
+                                <p>${item.name}</p>
+                                <span>${formatCurrency(item.price)}</span>
+                            </div>
+                            <div class="quantity-control">
+                                <button class="quantity-change" data-change="-1">-</button>
+                                <span>${item.quantity}</span>
+                                <button class="quantity-change" data-change="1">+</button>
+                            </div>
+                            <button class="remove-item icon-button" style="color: var(--danger);"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    `).join('');
+                    document.getElementById('cart-total-price').textContent = formatCurrency(totalPrice);
+                }
+                updateCartCount();
+                lucide.createIcons();
+            };
+            
+            const renderCheckout = () => {
+                const summaryList = document.getElementById('summary-items-list');
+                const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+                summaryList.innerHTML = cart.map(item => `
+                    <div class="summary-item">
+                        <span class="name">${item.name} x${item.quantity}</span>
+                        <span class="price">${formatCurrency(item.price * item.quantity)}</span>
+                    </div>
+                `).join('');
+                document.getElementById('summary-total-price').textContent = formatCurrency(totalPrice);
+            };
+
+            // --- MANAJEMEN TAMPILAN (Navigasi antar halaman) ---
+            const switchView = (viewName) => {
+                window.scrollTo(0, 0); // Selalu kembali ke atas saat ganti halaman
+                currentView = viewName;
+                Object.values(views).forEach(view => view.style.display = 'none');
+                views[viewName].style.display = 'block';
+                
+                if (viewName !== 'catalog' && historyStack[historyStack.length - 1] !== viewName) {
+                    historyStack.push(viewName);
+                }
+                backButton.style.display = historyStack.length > 1 ? 'flex' : 'none';
+                
+                // Panggil fungsi render yang sesuai untuk tampilan baru
+                if(viewName === 'cart') renderCart();
+                if(viewName === 'checkout') renderCheckout();
+            };
+
+            // --- FUNGSI LOGIKA (Aksi pengguna) ---
+            const updateCartCount = () => {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                cartItemCount.style.display = totalItems > 0 ? 'flex' : 'none';
+                cartItemCount.textContent = totalItems;
+            };
+            
+            const addToCart = (productId) => {
+                const product = products.find(p => p.id === productId);
+                const existingItem = cart.find(item => item.id === productId);
+
+                if (existingItem) {
+                    existingItem.quantity++;
+                } else {
+                    cart.push({ ...product, quantity: 1 });
+                }
+                alert("${product.name}" telah ditambahkan ke keranjang!);
+                updateCartCount();
+            };
+            
+            const updateCartQuantity = (productId, change) => {
+                const itemIndex = cart.findIndex(i => i.id === productId);
+                if (itemIndex > -1) {
+                    cart[itemIndex].quantity += change;
+                    if (cart[itemIndex].quantity <= 0) {
+                        cart.splice(itemIndex, 1);
+                    }
+                }
+                renderCart();
+            };
+            
+            const handleCheckoutSubmit = (e) => {
+                e.preventDefault();
+                if (cart.length === 0) {
+                    alert("Keranjang Anda kosong!");
+                    return;
+                }
+                const customerName = document.getElementById('customer-name').value;
+                const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+                const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+
+                alert(Pesanan berhasil!\n\nAtas nama: ${customerName}\nTotal: ${formatCurrency(totalPrice)}\nMetode Bayar: ${paymentMethod.replace('_', ' ').toUpperCase()}\n\nTerima kasih telah berbelanja!);
+                
+                cart = [];
+                updateCartCount();
+                historyStack = ['catalog'];
+                switchView('catalog');
+                e.target.reset();
+            };
+
+            // --- EVENT LISTENERS (Menghubungkan aksi pengguna ke fungsi) ---
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+                switchView('catalog'); // Selalu kembali ke katalog saat mencari
+                renderCatalog(filtered);
+            });
+
+            backButton.addEventListener('click', () => {
+                historyStack.pop();
+                const previousView = historyStack[historyStack.length - 1] || 'catalog';
+                switchView(previousView);
+            });
+            
+            cartButton.addEventListener('click', () => {
+                if (currentView !== 'cart') switchView('cart');
+            });
+
+            brandLogo.addEventListener('click', () => {
+                historyStack = ['catalog'];
+                searchInput.value = ''; // Kosongkan pencarian
+                renderCatalog(); // Tampilkan semua produk lagi
+                switchView('catalog');
+            });
+            
+            document.getElementById('start-shopping-button').addEventListener('click', () => switchView('catalog'));
+            document.getElementById('checkout-button').addEventListener('click', () => switchView('checkout'));
+            
+            // Event delegation untuk tombol di dalam keranjang
+            document.getElementById('cart-view').addEventListener('click', (e) => {
+                const target = e.target.closest('.quantity-change, .remove-item');
+                if (!target) return;
+                
+                const cartItemElement = target.closest('.cart-item');
+                const productId = parseInt(cartItemElement.dataset.productId);
+
+                if (target.classList.contains('quantity-change')) {
+                    const change = parseInt(target.dataset.change);
+                    updateCartQuantity(productId, change);
+                } else if (target.closest('.remove-item')) {
+                    if (confirm('Anda yakin ingin menghapus item ini dari keranjang?')) {
+                        updateCartQuantity(productId, -Infinity); // Hapus item
+                    }
+                }
+            });
+            
+            document.getElementById('checkout-form').addEventListener('submit', handleCheckoutSubmit);
+
+            // --- INISIALISASI APLIKASI ---
+            lucide.createIcons();
+            renderCatalog();
+        });
+    </script>
 </body>
 </html>
