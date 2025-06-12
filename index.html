@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog Produk</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Impor Ikon Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <!-- Header Aplikasi -->
+    <header id="app-header">
+        <div class="container">
+            <button id="back-button" class="icon-button" style="display: none;">
+                <i data-lucide="arrow-left"></i>
+            </button>
+            <div class="search-container">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" id="search-input" placeholder="Cari produk...">
+            </div>
+            <button id="cart-button" class="icon-button">
+                <i data-lucide="shopping-cart"></i>
+                <span id="cart-item-count" class="cart-badge" style="display: none;">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Konten Utama (Akan diisi oleh JavaScript) -->
+    <main id="app-main" class="container">
+        <!-- Tampilan Katalog -->
+        <div id="catalog-view">
+            <h2 class="view-title">MONGGO <span class="text">CO</h2>
+            <div id="product-grid" class="product-grid">
+                <!-- Kartu produk akan dimasukkan di sini oleh JS -->
+            </div>
+            <p id="no-products-message" class="info-message" style="display: none;">Produk tidak ditemukan.</p>
+        </div>
+
+        <!-- Tampilan Detail Produk -->
+        <div id="product-detail-view" style="display: none;">
+            <!-- Konten detail produk akan dimasukkan di sini oleh JS -->
+        </div>
+
+        <!-- Tampilan Keranjang -->
+        <div id="cart-view" style="display: none;">
+            <h2 class="view-title">Keranjang Saya</h2>
+            <div id="cart-items-container" class="cart-items-container">
+                <!-- Item keranjang akan dimasukkan di sini oleh JS -->
+            </div>
+             <div id="cart-empty-message" class="empty-state" style="display: none;">
+                <p>Keranjang Anda kosong.</p>
+                <button id="start-shopping-button" class="btn btn-primary">Mulai Belanja</button>
+            </div>
+            <div id="cart-summary" style="display: none;">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span id="cart-total-price"></span>
+                </div>
+                <button id="checkout-button" class="btn btn-primary btn-full">Checkout</button>
+            </div>
+        </div>
+
+        <!-- Tampilan Checkout -->
+        <div id="checkout-view" style="display: none;">
+             <h2 class="view-title">Checkout</h2>
+             <form id="checkout-form" class="checkout-form">
+                <div class="checkout-grid">
+                    <!-- Kolom Alamat dan Pembayaran -->
+                    <div class="form-column">
+                        <div class="form-section">
+                             <h3 class="section-title"><i data-lucide="map-pin"></i> Alamat Pengiriman</h3>
+                             <div class="input-group">
+                                 <i data-lucide="user"></i>
+                                 <input type="text" id="customer-name" placeholder="Nama Penerima" required>
+                             </div>
+                             <div class="input-group">
+                                 <i data-lucide="map-pin"></i>
+                                 <input type="text" id="customer-address" placeholder="Alamat Lengkap" required>
+                             </div>
+                             <div class="input-group">
+                                 <i data-lucide="phone"></i>
+                                 <input type="tel" id="customer-phone" placeholder="Nomor Telepon" required>
+                             </div>
+                        </div>
+                         <div class="form-section">
+                             <h3 class="section-title"><i data-lucide="credit-card"></i> Metode Pembayaran</h3>
+                             <div class="payment-options">
+                                 <label class="payment-option">
+                                     <input type="radio" name="payment" value="bank_transfer" checked>
+                                     <span>Transfer Bank</span>
+                                     <i data-lucide="banknote"></i>
+                                 </label>
+                                  <label class="payment-option">
+                                     <input type="radio" name="payment" value="credit_card">
+                                     <span>Kartu Kredit</span>
+                                     <i data-lucide="credit-card"></i>
+                                 </label>
+                                  <label class="payment-option">
+                                     <input type="radio" name="payment" value="e_wallet">
+                                     <span>E-Wallet</span>
+                                     <i data-lucide="wallet"></i>
+                                 </label>
+                             </div>
+                        </div>
+                    </div>
+                    <!-- Kolom Ringkasan Pesanan -->
+                    <div class="summary-column">
+                        <div class="form-section">
+                             <h3 class="section-title"><i data-lucide="package"></i> Ringkasan Pesanan</h3>
+                             <div id="summary-items-list" class="summary-items-list"></div>
+                             <div class="summary-total">
+                                 <span>Total</span>
+                                 <span id="summary-total-price"></span>
+                             </div>
+                             <button type="submit" class="btn btn-primary btn-full">Buat Pesanan</button>
+                        </div>
+                    </div>
+                </div>
+             </form>
+        </div>
+    </main>
+    
+    <!-- Tombol Hubungi Admin -->
+    <a href="mailto:admin@tokosaya.com" class="fab">
+        <i data-lucide="message-circle"></i>
+    </a>
+
+    <script src="script.js"></script>
+</body>
+</html>
