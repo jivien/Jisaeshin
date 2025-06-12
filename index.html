@@ -11,7 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap" rel="stylesheet">
     
     <!-- Impor Ikon Lucide -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PERHATIKAN: Atribut defer ditambahkan di sini -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     
     <!-- Semua gaya CSS disematkan di sini -->
     <style>
@@ -650,8 +651,8 @@
         <i data-lucide="message-circle"></i>
     </a>
 
-    <!-- Semua logika JavaScript disematkan di sini -->
-    <script>
+    <!-- PERHATIKAN: Atribut defer ditambahkan di sini agar skrip berjalan setelah HTML siap -->
+    <script defer>
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- DATABASE PRODUK (Bisa diganti dengan data Anda) ---
@@ -984,14 +985,14 @@
             cartButton.addEventListener('click', () => {
                 if (currentView !== 'cart') switchView('cart');
             });
-
+            
             brandLogo.addEventListener('click', () => {
                 historyStack = ['catalog'];
                 searchInput.value = ''; // Kosongkan pencarian
                 renderCatalog(); // Tampilkan semua produk lagi
                 switchView('catalog');
             });
-            
+
             document.getElementById('start-shopping-button').addEventListener('click', () => switchView('catalog'));
             document.getElementById('checkout-button').addEventListener('click', () => switchView('checkout'));
             
@@ -1016,6 +1017,7 @@
             document.getElementById('checkout-form').addEventListener('submit', handleCheckoutSubmit);
 
             // --- INISIALISASI APLIKASI ---
+            // Inisialisasi ikon secara manual di akhir, setelah DOM siap
             lucide.createIcons();
             renderCatalog();
         });
